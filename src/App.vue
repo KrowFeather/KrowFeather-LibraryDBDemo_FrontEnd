@@ -9,7 +9,9 @@
           <el-button class="loginBtn" @click="logined" style="width: 100%;">Log in</el-button>
           <el-button class="regBtn" @click="register" style="width: 100%;">Reg</el-button>
         </div>
-        <el-button class="findBtn" @click="findPwd = true" style="width: 70%; margin-top: 1em;">忘记密码？</el-button>
+        <el-button class="findBtn" @click="adminLogin" style="width: 70%; margin-top: 1em;">管理员登录</el-button>
+        <el-button class="findBtn" @click="findPwd = true"
+          style="width: 70%; margin-top: 1em;margin-left: -0.0vw">忘记密码？</el-button>
       </div>
     </div>
     <el-dialog v-model="findPwd" width="30em" @close="showFindSeQTable = false, showResTable = false">
@@ -38,12 +40,13 @@
         <el-input type="password" v-model="password" placeholder="your pwd *" class="inputer"></el-input>
         <el-input type="password" v-model="re_password" placeholder="reconfirm your pwd *" class="inputer"></el-input>
         <p style="margin: 0.3em">设置密保(选)</p>
-        <el-select v-model="questionid" style="width: 70%;" >
+        <el-select v-model="questionid" style="width: 70%;">
           <el-option label="你的生日是几月几号" value="你的生日是几月几号"></el-option>
           <el-option label="你最喜欢的颜色是什么" value="你最喜欢的颜色是什么"></el-option>
           <el-option label="你的家乡在哪里" value="你的家乡在哪里"></el-option>
         </el-select>
-        <el-input type="text" v-model="ans" style="width: 70%;margin-top: 0.2em;margin-bottom: 1em;" placeholder="答案"></el-input>
+        <el-input type="text" v-model="ans" style="width: 70%;margin-top: 0.2em;margin-bottom: 1em;"
+          placeholder="答案"></el-input>
         <div class="buttonGroup" style="width: 70%; display: flex;">
           <el-button class="reggBtn" @click="registerNew">Reg</el-button>
           <el-button class="backBtn" @click="backToLogin">Back</el-button>
@@ -56,9 +59,9 @@
     <el-menu mode="vertical" :default-active="selectedIndex" @select="selected" background-color="#333" class="sidebar"
       active-text-color="white" text-color="#AAA">
       <el-menu-item index="1">首页</el-menu-item>
-      <el-menu-item index="5">借阅</el-menu-item>
-      <el-menu-item index="2" v-if="accountStore.username == 'root'">借阅管理</el-menu-item>
-      <el-menu-item index="3" v-if="accountStore.username == 'root'">图书信息管理</el-menu-item>
+      <el-menu-item index="5" v-if="accountStore.isadmin == false">借阅</el-menu-item>
+      <el-menu-item index="2" v-if="accountStore.isadmin == true">借阅管理</el-menu-item>
+      <el-menu-item index="3" v-if="accountStore.isadmin == true">图书信息管理</el-menu-item>
       <el-menu-item index="4">账号管理</el-menu-item>
     </el-menu>
     <div class="maincontent">
@@ -68,7 +71,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
@@ -87,6 +90,24 @@ let host = accountStore.host
 let seq = ref('')
 let showFindSeQTable = ref(false)
 let showResTable = ref(false)
+onMounted(async () => {
+  await axios.get(host + '/getip')
+    .then(response => {
+      if (response.data == 'No') {
+        ElMessage({
+          type: 'error',
+          message: '出错了',
+          showClose: true
+        })
+      } else {
+        accountStore.ipaddress = response.data
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    });
+    console.log(accountStore.ipaddress)
+})
 const logined = async () => {
   await axios.get(host + '/Logincheck/' + username.value + '&&' + password.value).then((response) => {
     console.log(response.data)
@@ -98,6 +119,29 @@ const logined = async () => {
       })
       accountStore.isLogined = 1;
       accountStore.username = username.value
+      changeToHomePage()
+    } else {
+      ElMessage({
+        type: 'error',
+        message: '密码或用户名错误',
+        showClose: true
+      })
+    }
+  })
+}
+
+const adminLogin = async () => {
+  await axios.get(host + '/adminLogin/' + username.value + '&&' + password.value).then((response) => {
+    console.log(response.data)
+    if (response.data == 'Yes') {
+      ElMessage({
+        type: 'info',
+        message: '登录成功',
+        showClose: true
+      })
+      accountStore.isLogined = 1;
+      accountStore.username = username.value
+      accountStore.isadmin = true
       changeToHomePage()
     } else {
       ElMessage({
@@ -131,7 +175,7 @@ const registerNew = async () => {
       return
     }
     if (questionid.value == '' || ans.value == '') {
-      await axios.get(host + '/regcheckNoques/' + username.value + '&&' + password.value).then((response) => {
+      await axios.get(host + '/regcheckNoques/' + username.value + '&&' + password.value + '&&' + accountStore.ipaddress).then((response) => {
         if (response.data == 'No') {
           ElMessage({
             type: 'error',
@@ -139,16 +183,33 @@ const registerNew = async () => {
             showClose: true
           })
         } else {
-          ElMessage({
-            type: 'info',
-            message: '注册成功',
-            showClose: true
-          })
-          accountStore.isLogined = 0
+          if (response.data == 'warning') {
+            ElMessage({
+              type: 'warning',
+              message: '您今天已经注册过一次了，最多两次',
+              showClose: true
+            })
+            accountStore.isLogined = 0
+          }
+          if (response.data == 'Yes') {
+            ElMessage({
+              type: 'info',
+              message: '注册成功',
+              showClose: true
+            })
+            accountStore.isLogined = 0
+          }
+          if (response.data == 'full') {
+            ElMessage({
+              type: 'error',
+              message: '今天注册次数已达上限',
+              showClose: true
+            })
+          }
         }
       })
     } else {
-      await axios.get(host + '/regcheck/' + username.value + '&&' + password.value + '&&' + questionid.value + '&&' + ans.value).then((response) => {
+      await axios.get(host + '/regcheck/' + username.value + '&&' + password.value + '&&' + questionid.value + '&&' + ans.value + '&&' + accountStore.ipaddress).then((response) => {
         if (response.data == 'No') {
           ElMessage({
             type: 'error',
@@ -156,12 +217,29 @@ const registerNew = async () => {
             showClose: true
           })
         } else {
-          ElMessage({
-            type: 'info',
-            message: '注册成功',
-            showClose: true
-          })
-          accountStore.isLogined = 0
+          if (response.data == 'warning') {
+            ElMessage({
+              type: 'warning',
+              message: '您今天已经注册过一次了，最多两次',
+              showClose: true
+            })
+            accountStore.isLogined = 0
+          }
+          if (response.data == 'Yes') {
+            ElMessage({
+              type: 'info',
+              message: '注册成功',
+              showClose: true
+            })
+            accountStore.isLogined = 0
+          }
+          if (response.data == 'full') {
+            ElMessage({
+              type: 'error',
+              message: '今天注册次数已达上限',
+              showClose: true
+            })
+          }
         }
       })
     }
@@ -246,13 +324,13 @@ const confirmSeQ = async () => {
         showClose: true
       })
     } else {
-      if(resp.data=='failed'){
+      if (resp.data == 'failed') {
         ElMessage({
           type: 'error',
           message: '答案错误',
           showClose: true
         })
-      }else{
+      } else {
         retpassword.value = resp.data
         showResTable.value = true
       }

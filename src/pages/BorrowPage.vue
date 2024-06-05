@@ -19,6 +19,7 @@
                     <el-table-column prop="no" label="编号"></el-table-column>
                     <el-table-column prop="userid" label="用户编号"></el-table-column>
                     <el-table-column prop="bookid" label="图书编号"></el-table-column>
+                    <el-table-column prop="adminid" label="管理员编号"></el-table-column>
                     <el-table-column prop="borrowtime" label="借阅时间"></el-table-column>
                     <el-table-column prop="returntime" label="归还时间"></el-table-column>
                     <el-table-column label="操作" width="200">
@@ -34,6 +35,7 @@
                 <el-table-column prop="no" label="编号"></el-table-column>
                 <el-table-column prop="userid" label="用户编号"></el-table-column>
                 <el-table-column prop="bookid" label="图书编号"></el-table-column>
+                <el-table-column prop="adminid" label="管理员编号"></el-table-column>
                 <el-table-column prop="borrowtime" label="借阅时间"></el-table-column>
                 <el-table-column prop="returntime" label="归还时间"></el-table-column>
                 <el-table-column label="操作" width="200">
@@ -138,7 +140,7 @@ const addNewBorrow = async()=>{
         return
     }
     console.log(bortime.value)
-    await axios.get(host+'/addNewBorrow/'+userid.value+'&&'+bkid.value+'&&'+bortime.value).then((resp)=>{
+    await axios.get(host+'/addNewBorrow/'+userid.value+'&&'+bkid.value+'&&'+bortime.value+'&&'+useAccount.username).then((resp)=>{
         if(resp.data=='success'){
             ElMessage({
                 type:'info',
@@ -157,7 +159,7 @@ const addNewBorrow = async()=>{
 }
 const alterBorrowInfo = async()=>{
     const rettime = dayjs().format('YYYY-MM-DD')
-    await axios.get(host+'/returnBorrow/'+alterid.value.no+'&&'+rettime).then((resp)=>{
+    await axios.get(host+'/returnBorrow/'+alterid.value.no+'&&'+rettime+'&&'+useAccount.username).then((resp)=>{
         if(resp.data=='success'){
             ElMessage({
                 type:'info',

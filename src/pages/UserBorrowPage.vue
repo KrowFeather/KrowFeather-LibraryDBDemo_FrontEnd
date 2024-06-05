@@ -10,6 +10,7 @@
                     <el-table-column prop="no" label="编号"></el-table-column>
                     <el-table-column prop="bookname" label="书名"></el-table-column>
                     <el-table-column prop="bookauthor" label="作者"></el-table-column>
+                    <el-table-column prop="adminid" label="管理员编号"></el-table-column>
                     <el-table-column prop="borrowtime" label="借阅时间"></el-table-column>
                     <el-table-column prop="returntime" label="归还时间"></el-table-column>
                 </el-table>

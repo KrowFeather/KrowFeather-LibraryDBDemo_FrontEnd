@@ -7,7 +7,7 @@
             <div class="changePassword" @click="changePwd = true">
                 修改密码
             </div>
-            <div class="deleteAccount" v-if="useAccount.username != 'root'" @click="delAccount = true">
+            <div class="deleteAccount" v-if="useAccount.isadmin==false" @click="delAccount = true">
                 注销账户
             </div>
             <div class="changeSecureQuestion" @click="changeSQ = true">
