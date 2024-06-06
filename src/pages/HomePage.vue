@@ -156,7 +156,7 @@ const getMostPopularBooks = async () => {
       })
     } else {
       resp.data.forEach((val: any) => {
-        mostPopularBooks_id.push(val.bookid)
+        mostPopularBooks_id.push(val.bookname)
         mostPopularBooks_cnt.push(val.cnt)
       });
       console.log(mostPopularBooks_id)
